@@ -1,0 +1,36 @@
+services:
+  server:
+    container_name: backend-example-1
+    image: backend-example-1
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "2323:2323"
+    environment:
+      - DATABASE_URL=postgresql://myuser:mypassword@postgres:5432/userdb?schema=public
+      - PORT=2323
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+
+  postgres:
+    image: postgres:14
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: userdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d userdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+volumes:
+  postgres_data:

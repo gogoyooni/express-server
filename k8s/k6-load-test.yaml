@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k6-load-test
+  namespace: test-load
+spec:
+  template:
+    spec:
+      containers:
+      - name: k6
+        image: grafana/k6
+        command: ["k6"]
+        args: 
+        - run
+        - --vus=10
+        - --duration=5m
+        - -
+        volumeMounts:
+        - name: script
+          mountPath: /script
+        stdin: true
+        stdinOnce: true
+      volumes:
+      - name: script
+        emptyDir: {}
+      restartPolicy: Never
+  backoffLimit: 1

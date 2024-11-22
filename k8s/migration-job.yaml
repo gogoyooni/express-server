@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migration
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: check-db-ready
+        image: postgres:14
+        command: ['sh', '-c', 
+          'until pg_isready -h postgres -p 5432; 
+          do echo waiting for database; sleep 2; done;']
+      containers:
+      - name: migration
+        image: user-api:latest
+        imagePullPolicy: Never
+        command: ["sh", "-c"]
+        args:
+          - |
+            npx prisma migrate dev --name init --create-only
+            npx prisma migrate deploy
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: database-url
+      restartPolicy: Never
+  backoffLimit: 4
